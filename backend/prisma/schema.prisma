@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  phone     String?  @unique
+  email     String?  @unique
+  password  String
+  firstName String?
+  lastName  String?
+  fcmToken  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contributions       Contribution[]
+  piggyBankMembers    PiggyBankMember[]
+  createdPiggyBanks   PiggyBank[]          @relation("CreatedPiggyBanks")
+  withdrawalRequests  WithdrawalRequest[]  @relation("WithdrawalRequestBy")
+  withdrawalApprovals WithdrawalApproval[]
+
+  @@index([phone])
+  @@index([email])
+}
+
+enum PiggyBankStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model PiggyBank {
+  id                  String          @id @default(uuid())
+  name                String
+  goalAmount          Float
+  currentAmount       Float           @default(0)
+  startDate           DateTime        @default(now())
+  endDate             DateTime
+  accountabilityVideo String // Cloudinary URL
+  status              PiggyBankStatus @default(ACTIVE)
+  createdById         String
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  createdBy          User                @relation("CreatedPiggyBanks", fields: [createdById], references: [id])
+  members            PiggyBankMember[]
+  contributions      Contribution[]
+  withdrawalRequests WithdrawalRequest[]
+
+  @@index([createdById])
+  @@index([status])
+}
+
+enum MemberRole {
+  OWNER
+  MEMBER
+}
+
+model PiggyBankMember {
+  id          String     @id @default(uuid())
+  piggyBankId String
+  userId      String
+  role        MemberRole @default(MEMBER)
+  joinedAt    DateTime   @default(now())
+
+  piggyBank PiggyBank @relation(fields: [piggyBankId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([piggyBankId, userId])
+  @@index([piggyBankId])
+  @@index([userId])
+}
+
+enum ContributionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Contribution {
+  id               String             @id @default(uuid())
+  piggyBankId      String
+  userId           String
+  amount           Float
+  videoUrl         String // Cloudinary URL
+  paymentReference String             @unique
+  status           ContributionStatus @default(PENDING)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  piggyBank PiggyBank @relation(fields: [piggyBankId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([piggyBankId])
+  @@index([userId])
+  @@index([paymentReference])
+  @@index([status])
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+model WithdrawalRequest {
+  id          String           @id @default(uuid())
+  piggyBankId String
+  requestedBy String
+  amount      Float
+  reason      String?
+  videoUrl    String? // Optional video for emergency withdrawals
+  status      WithdrawalStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  piggyBank PiggyBank            @relation(fields: [piggyBankId], references: [id], onDelete: Cascade)
+  requester User                 @relation("WithdrawalRequestBy", fields: [requestedBy], references: [id])
+  approvals WithdrawalApproval[]
+
+  @@index([piggyBankId])
+  @@index([requestedBy])
+  @@index([status])
+}
+
+model WithdrawalApproval {
+  id                  String   @id @default(uuid())
+  withdrawalRequestId String
+  userId              String
+  approved            Boolean
+  comment             String?
+  createdAt           DateTime @default(now())
+
+  withdrawalRequest WithdrawalRequest @relation(fields: [withdrawalRequestId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [userId], references: [id])
+
+  @@unique([withdrawalRequestId, userId])
+  @@index([withdrawalRequestId])
+  @@index([userId])
+}
+
+// OTP storage for verification
+model OTP {
+  id        String   @id @default(uuid())
+  phone     String?
+  email     String?
+  code      String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@index([email])
+  @@index([expiresAt])
+}
