@@ -1,114 +1,87 @@
 # PiggyCapsule
 
-**A shared digital savings platform with memories, accountability, and time-locked goals.**
+A shared-savings application prototype combining group goals, contribution records, and video-memory concepts. The repository contains a NestJS API and an Expo / React Native client.
 
-PiggyCapsule enables couples, families, or partners to collaboratively save money over a fixed period while creating a video time capsule of memories and intentions.
+## Implementation status
 
----
+| Area | Current evidence |
+| --- | --- |
+| Authentication | Signup, login, OTP, JWT, and password hashing code |
+| Group savings | Piggy-bank and membership modules |
+| Contributions | Contribution records and memory-timeline queries |
+| Payments | Provider initialization and verification are TODOs in the contribution service |
+| Withdrawals | Request and approval models exist in the Prisma schema; a complete execution workflow is not established |
+| Mobile client | Screens and mock data exist; end-to-end API integration needs verification |
 
-## 📦 Project Structure
+This is not a production payment service. The earlier fixed-OTP example is not the current generator: the source generates a random six-digit value with `Math.random()`, which needs security review before real use.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    Mobile["Expo / React Native screens"] -. "integration under development" .-> API["NestJS modules"]
+    API --> Prisma["Prisma data access"]
+    Prisma --> DB["PostgreSQL"]
+    API -. "planned provider integration" .-> Providers["Payments and media services"]
 ```
-piggycapsule/
-├── backend/          # NestJS API server
-├── mobile/           # React Native (Expo) mobile app
-└── README.md         # This file
-```
 
----
+## Repository structure
 
-## 🚀 Quick Start
+- [backend/src/auth](backend/src/auth) — authentication.
+- [backend/src/piggy-banks](backend/src/piggy-banks) — group savings.
+- [backend/src/contributions](backend/src/contributions) — contribution records.
+- [backend/prisma/schema.prisma](backend/prisma/schema.prisma) — relational models.
+- [mobile/app](mobile/app) — Expo Router screens.
+- [mobile/src/data/mock.ts](mobile/src/data/mock.ts) — demonstration data.
+- [backend/README.md](backend/README.md) — endpoint reference and backend setup details.
 
-### Backend Setup
+## Development setup
 
-```bash
+Install Node.js compatible with the declared NestJS, Prisma, and Expo versions. Use a disposable PostgreSQL database.
+
+### API
+
+```sh
 cd backend
 npm install
-cp .env.example .env
-# Edit .env with your credentials
+```
+
+Copy `.env.example` to `.env` and configure your development database and JWT settings. Review `prisma.config.ts`, then generate the client and apply development migrations:
+
+```sh
+npx prisma generate
 npx prisma migrate dev
 npm run start:dev
 ```
 
-See [backend/README.md](backend/README.md) for detailed instructions.
+These are the project's setup steps, not a report of a passing clean installation. The repository's Prisma 7 configuration and client initialization need compatibility verification. Do not use a production database.
 
-### Mobile App Setup
+### Mobile
 
-```bash
+In a separate terminal:
+
+```sh
 cd mobile
 npm install
 npm start
 ```
 
-See mobile/README.md for detailed instructions (coming soon).
+Follow Expo's local instructions for your simulator, device, or web target.
 
----
+## Checks
 
-## 🎯 Core Features
+The backend declares `npm test`, `npm run test:e2e`, and `npm run build`. Existing test files do not establish coverage of payment correctness, group authorization, or withdrawal behavior. The mobile package provides `android`, `ios`, and `web` launch scripts.
 
-### MVP (v1.0)
+## Engineering limitations
 
-- ✅ User authentication (phone/email + OTP)
-- ✅ Create time-locked piggy banks with accountability videos
-- ✅ Add deposits with memory videos
-- ✅ Group member management
-- ✅ Paystack payment integration
-- ✅ Time-locked withdrawals with unanimous approval
-- ✅ Memory timeline playback
+Payment verification currently marks contributions complete without contacting the provider, and repeated calls can increment the balance again. Monetary fields use floating-point types. Review idempotency, atomic updates, authorization, money representation, and provider verification before using real funds.
 
-### Future Enhancements
+Generated backend output is currently tracked under `backend/dist/`; it should not be treated as the authoritative implementation. Read `backend/src/`.
 
-- Interest-bearing savings
-- AI memory recaps
-- Savings streaks and gamification
-- Family vaults
-- Social sharing
+## Next improvements
 
----
+Finish and test provider integrations, establish the mobile/API contract, harden authentication and payment transitions, use precise monetary representations, and make clean setup reproducible.
 
-## 🛠️ Tech Stack
+## Author
 
-**Backend:**
-
-- NestJS + PostgreSQL + Prisma
-- Paystack (payments)
-- Cloudinary (video storage)
-- Firebase Cloud Messaging (notifications)
-
-**Mobile:**
-
-- React Native (Expo)
-- React Query (data fetching)
-- React Navigation
-- Expo Camera & AV
-
----
-
-## 📝 License
-
-MIT
-
----
-
-## 🤝 Contributing
-
-## 🛠️ Mock Data Reference (Development)
-
-During development, the following mock values are used to simulate external services.
-
-### Authentication (OTP)
-
-- **OTP Code**: `123456` (Fixed for all phone numbers/emails in dev mode)
-- **Test Phone**: `+2348000000000`
-- **Test Email**: `test@piggycapsule.com`
-
-### Payments (Paystack)
-
-- **Test Card**: Use Paystack's standard test cards.
-- **Mock Payment Link**: `https://checkout.paystack.com/mock-payment-page`
-- **Mock Ref Prefix**: `MOCK_REF_`
-
-### Video Upload (Cloudinary)
-
-- **Mock Video URL**: `https://res.cloudinary.com/demo/video/upload/v1/dog.mp4`
-- **Mock Signature**: `mock_signature_123`
+Tekena Ajuzieogu · [GitHub](https://github.com/CyberTekena)
