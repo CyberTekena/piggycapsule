@@ -1,5 +1,7 @@
 # PiggyCapsule Backend API
 
+> **Status:** development prototype. Start with the [root implementation-status table](../README.md). The feature list below includes design goals and unfinished integrations: payment initialization/verification are TODOs, withdrawal schema models are not a complete withdrawal service, and the fixed OTP shown in request examples is illustrative. Setup has not been clean-install verified. Do not interpret this endpoint reference as production-readiness evidence.
+
 A NestJS-based backend for PiggyCapsule - a shared digital savings platform with time-locked goals, video memories, and group accountability.
 
 ## Features
